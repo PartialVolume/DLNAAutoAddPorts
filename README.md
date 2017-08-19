@@ -26,7 +26,9 @@ Write it to somewhere on your disc and give it a name ie DLNAAutoAddPorts.sh
 Give it root ownership (chown root:root filename) and read+execute permissions
 for user root only ie (chmod 500 filename).
 As root, edit the root crontab (crontab -e) and add the following line changing 'linuxtv' to your own home directory.
+
 **`* * * * * /home/linuxtv/bin/DLNAAutoAddPorts.sh`**
+
 This crontab entry will execute DLNAAutoAddPorts.sh every minute, so worst case if the bubbleupnpserver or DLNA server
 software is restarted or new servers or proxy servers added it may take 60 seconds before the firewall is opened.
 
