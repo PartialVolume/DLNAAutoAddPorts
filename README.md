@@ -22,10 +22,18 @@ So if you find that your DLNA/Chromecast devices don't work or can't be seen whe
 but work fine with your firewall disabled, this script may be for you.
 
 ## Installation:
-Write it to somewhere on your disc and give it a name ie DLNAAutoAddPorts.sh
-Give it root ownership (chown root:root filename) and read+execute permissions
-for user root only ie (chmod 500 filename).
-As root, edit the root crontab (crontab -e) and add the following line changing 'linuxtv' to your own home directory.
+Move DLNAAutoAddPorts.sh into a directory, in this example /home/linuxtv/bin/
+Give it root ownership and read+execute permissions for root ONLY ..
+
+`cd /home/linuxtv/bin
+`chown root:root DLNAAutoAddPorts.sh`
+`chmod 500 DLNAAutoAddPorts.sh`
+
+As root, edit the root crontab ..
+
+`crontab -e`
+
+ and add the following line changing 'linuxtv' to your own home directory.
 
 **`* * * * * /home/linuxtv/bin/DLNAAutoAddPorts.sh`**
 
