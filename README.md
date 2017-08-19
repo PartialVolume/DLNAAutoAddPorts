@@ -1,11 +1,7 @@
-# DNLAAutoAddPorts
+## DNLAAutoAddPorts
 
-This script will open and close TCP & UDP ports automatically for specified processes.
-It was designed to open TCP/UDP ports as randomly used by DLNA/UPNP servers that need
-to be accessable on the local area network, while having most ports closed to to your LAN
-except those explicitly stated by UFW or IPTABLES etc. It was mainly written with bubbleupnpserver
-and minidlnad in mind but should work for other DLNA software & devices. Any existing rules you
-have in your firewall are not affected.
+This script will open and close TCP & UDP ports automatically for specified processes. It was designed to open TCP/UDP ports as randomly used by DLNA/UPNP servers that need to be accessable on the local area network, while having most ports closed to to your LAN except those explicitly stated by UFW or IPTABLES etc. It was mainly written with bubbleupnpserver
+and minidlnad in mind but should work for other DLNA software & devices. Any existing rules you have in your firewall are not affected.
 
 It was designed to operate with IPTABLES & UFW, although it doesn't interact with UFW, UFW should be used
 to enable the firewall, typically blocking incoming. DLNAAutoAddPorts.sh will then open the ports required
@@ -25,7 +21,7 @@ comes into play.
 So if you find that your DLNA/Chromecast devices don't work or can't be seen when your firewall is enabled
 but work fine with your firewall disabled, this script may be for you.
 
-#Installation:
+## Installation:
 Write it to somewhere on your disc and give it a name ie DLNAAutoAddPorts.sh
 Give it root ownership (chown root:root filename) and read+execute permissions
 for user root only ie (chmod 500 filename).
@@ -34,7 +30,7 @@ As root, edit the root crontab (crontab -e) and add the following line changing 
 This crontab entry will execute DLNAAutoAddPorts.sh every minute, so worst case if the bubbleupnpserver or DLNA server
 software is restarted or new servers or proxy servers added it may take 60 seconds before the firewall is opened.
 
-#Troubleshooting
+## Troubleshooting:
 If you want to see which ports are currently open, type more /tmp/ports*, this can also be confirmed
 by typing iptables -S INPUT. If your running UFW, the ufw status command will not show these ports as
 open, however they are open.
