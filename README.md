@@ -40,8 +40,9 @@ not running any of these servers feel free to remove them. Case is important ! I
 to enter or whether it's upper or lower case, makesure the process is running and use sudo netstat -anp to list
 Active Internet connections (servers and established). At the top section of the listing you will see lines like this
 
-```tcp        0      0 192.168.1.72:58051      0.0.0.0:*               LISTEN      1556/java 
-tcp        0      0 0.0.0.0:8200            0.0.0.0:*               LISTEN      28287/minidlnad```
+`tcp        0      0 192.168.1.72:58051      0.0.0.0:*               LISTEN      1556/java`
+ 
+`tcp        0      0 0.0.0.0:8200            0.0.0.0:*               LISTEN      28287/minidlnad`
 
 As shown above minidlnad is all lower case. BubbleuPnPServer is a special case because it's a java process. To find it's process name
 type ..
