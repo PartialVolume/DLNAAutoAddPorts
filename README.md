@@ -73,7 +73,14 @@ by typing iptables -S INPUT. If your running UFW, the ufw status command will no
 open, however they are open.
 
 DLNAAutoAddPorts.sh when run without any arguments does not ouput any information to stdout,
-unless it's encountered an error, to find out what it's doing add -v. It's advisable NOT to add
+unless it's encountered an error, to find out what it's doing add -v. Even though DLNAAutoAddPorts.sh
+may be run every minute by the cron, it's ok to run the command manually to see what it's doing.
+
+`cd /home/yourname/bin`
+
+`sudo DLNAAutoAddPorts.sh -v`
+
+ It's advisable NOT to add
 -v to the crontab entry, because if you are running an MTA such as sendmail the cron will send a mail to
 /var/spool/mail/root every minute. This might be useful for debugging but it will occupy disc space until
 you delete /var/spool/mail/root
