@@ -25,8 +25,10 @@ but work fine with your firewall disabled, this script may be for you.
 Move DLNAAutoAddPorts.sh into a directory, in this example /home/linuxtv/bin/
 Give it root ownership and read+execute permissions for root ONLY ..
 
-`cd /home/linuxtv/bin
+`cd /home/linuxtv/bin'
+
 `chown root:root DLNAAutoAddPorts.sh`
+
 `chmod 500 DLNAAutoAddPorts.sh`
 
 As root, edit the root crontab ..
