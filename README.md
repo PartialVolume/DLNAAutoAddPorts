@@ -80,6 +80,20 @@ may be run every minute by the cron, it's ok to run the command manually to see 
 
 `sudo DLNAAutoAddPorts.sh -v`
 
+```DLNAAutoAddPorts V2.0.5
+Ports are being checked/opened/closed for the following processes:
+minidlnad
+BubbleUPnPServer
+rygel
+Ports identified as being used by the above processes..
+TCP/40985 58050 58051 8200
+UDP/1900 40527 49929 5353
+diff output of previous and current port logs follows..
+No change in TCP ports
+diff output of previous and current port logs follows..
+No change in UDP ports
+```
+
  It's advisable NOT to add
 -v to the crontab entry, because if you are running an MTA such as sendmail the cron will send a mail to
 /var/spool/mail/root every minute. This might be useful for debugging but it will occupy disc space until
