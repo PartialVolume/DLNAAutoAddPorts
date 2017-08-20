@@ -27,7 +27,7 @@ processnames='minidlnad BubbleUPnPServer rygel'
 ## End of User Configuration  --------
 
 # Set logfiles
-version="DLNAAutoAddPorts V2.0.5"
+version="DLNAAutoAddPorts V2.0.6"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
