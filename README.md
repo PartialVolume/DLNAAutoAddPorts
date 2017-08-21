@@ -31,10 +31,14 @@ Give it root ownership and read+execute permissions for root ONLY ..
 
 `chmod 500 DLNAAutoAddPorts.sh`
 
-Open DLNAAutoAddPorts.sh with a text editor and find the line 
+Open DLNAAutoAddPorts.sh, search for a user configuration section which includes the following lines that can be edited as required.
 
-`processnames='minidlnad BubbleUPnPServer rygel'`
-
+```processnames='minidlnad BubbleUPnPServer rygel'
+min_DLNA_port='32000'
+allowed_TCP_ports_below_min_DLNA_port='8200'
+allowed_UDP_ports_below_min_DLNA_port='1900 5353'
+```
+**processnames='minidlnad BubbleUPnPServer rygel'**
 Remove or add process names as required, the default entries are minidlna, BubbleUPnPServer and rygel, if your
 not running any of these servers feel free to remove them. Case is important ! If your not sure what process name
 to enter or whether it's upper or lower case, makesure the process is running and use sudo netstat -anp to list
@@ -56,6 +60,17 @@ and you will see a line like this ..
 The part of the line above that contains BubbleUPnPServerLauncher.jar is what we are looking for. We only actually use BubbleUPnPServer, but if you use another java based DLNA server
 then you would look for the .jar bit. ie AnotherDLNAServer.jar. You could then add that to the process name list.
 
+**min_DLNA_port='32000'**
+Minimum lower port for use by DLNA for random ports, I'm not sure what this should be, but seems to be about 32000, all random ports I've seen DLNA programs use are somewhere between 32000 & 60000
+
+**allowed_TCP_ports_below_min_DLNA_port='8200'**
+All TCP ports below 'min_DLNA_port' will not be opened except for these exemptions
+
+**allowed_UDP_ports_below_min_DLNA_port='1900 5353'**
+## all UDP ports below 32000 will not be opened except for these exemptions
+
+
+## Edit root Crontab to run script every 60 seconds
 As root, edit the root crontab ..
 
 `crontab -e`
