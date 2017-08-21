@@ -12,13 +12,6 @@
 ## have in your firewall are not affected.
 ##
 
-## TO DO
-## [DONE in V2.0.2]Add -v (verbose) option
-## [DONE in V2.0.4]Add Java/bubbleupnpserver crosscheck from netstat -anp to ps -ef, ie only allow BubbleUPnPServerLauncher.jar, not other Java processes.
-## [DONE in V2.0.5]Add instance check. Only one instance of this script is allowed.
-## Add Min Port number and port overide list
-## Add more detail in verbose mode - identify which process is using which port.
-
 ## -----------------------------------
 ## User Configuration
 ## Edit these based on which DLNA servers you are running, multiple DLNA servers are ok. Separate each server name by a space
