@@ -19,15 +19,27 @@
 ## Add Min Port number and port overide list
 ## Add more detail in verbose mode - identify which process is using which port.
 
-## User Configuration ----------------
+## -----------------------------------
+## User Configuration
 ## Edit these based on which DLNA servers you are running, multiple DLNA servers are ok. Separate each server name by a space
 ## Note case is important, process names must match exactly what you see if you run ps -ef | grep -i bubbleupnpserver or
 ## ps -ef | grep -i minidlnad or ps -ef | grep -i rygel
 processnames='minidlnad BubbleUPnPServer rygel'
-## End of User Configuration  --------
+
+## Minimum lower port for use by DLNA for random ports, I'm not sure what this should be, but seems to be about 32000
+min_DLNA_port='32000' 
+
+## all TCP ports below 'min_DLNA_port' will not be opened except for these exemptions 
+allowed_TCP_ports_below_min_DLNA_port='8200'
+
+## all UDP ports below 32000 will not be opened except for these exemptions
+allowed_UDP_ports_below_min_DLNA_port='1900 5353'
+
+## End of User Configuration
+## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts V2.0.6"
+version="DLNAAutoAddPorts V2.0.7"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
@@ -92,6 +104,59 @@ done
 tcpports=$(echo $tcpports | xargs -n1 | sort -u | xargs)
 udpports=$(echo $udpports | xargs -n1 | sort -u | xargs)
 
+
+## Process the list of found ports removing those below min_DLNA_port unless 
+## in 'allowed_TCP_ports_below_min_DLNA_port' or 'allowed_UDP_ports_below_min_DLNA_port' 
+
+## TCP
+tcpports_tmp=""
+for tcpport in $tcpports
+do
+	if [ $tcpport -lt $min_DLNA_port ]
+	then
+		disallowed=1
+		for TCP_allowed in $allowed_TCP_ports_below_min_DLNA_port
+		do
+			if [ $tcpport -eq $TCP_allowed ]
+			then
+				disallowed=0
+				tcpports_tmp=$tcpports_tmp' '$tcpport
+				if [ $verbose -eq '1' ]; then echo Port $tcpport is below minimum DLNA port $min_DLNA_port but in allowed list [ACCEPTED];fi
+			fi
+		done
+		if [ $disallowed -eq '1' ];then if [ $verbose -eq '1' ]; then echo Port $tcpport is below minimum DLNA port $min_DLNA_port and NOT in allowed list [REJECTED];fi;fi
+	else 
+		tcpports_tmp=$tcpports_tmp' '$tcpport
+	fi
+done
+tcpports=$tcpports_tmp
+
+## UDP
+udpports_tmp=""
+for udpport in $udpports
+do
+        if [ $udpport -lt $min_DLNA_port ]
+        then
+                disallowed=1
+                for UDP_allowed in $allowed_UDP_ports_below_min_DLNA_port
+                do
+                        if [ $udpport -eq $UDP_allowed ]
+                        then
+                                disallowed=0
+                                udpports_tmp=$udpports_tmp' '$udpport
+                                if [ $verbose -eq '1' ]; then echo Port $udpport is below minimum DLNA port $min_DLNA_port but in allowed list [ACCEPTED];fi
+                        fi
+                done
+                if [ $disallowed -eq '1' ];then if [ $verbose -eq '1' ]; then echo Port udpport is below minimum DLNA port $min_DLNA_port and NOT in allowed list [REJECTED];fi;fi
+        else
+                udpports_tmp=$udpports_tmp' '$udpport
+        fi
+done
+udpports=$udpports_tmp
+
+
+## If in verbose mode echo a list of the TCP/UDP ports found as being used by the 'processnames'
+
 if [ $verbose -eq '1' ]; then echo "Ports identified as being used by the above processes..";fi
 if [ ! -z "$tcpports" ] || [ "$tcpports" = ' ' ]
 then
@@ -106,12 +171,14 @@ else
         if [ $verbose -eq '1' ]; then echo "No process & associated UDP ports found";fi
 fi
 
+
 ## Compare previous and current ports, if no change exit, if change then update iptables
 ## Echo all the TCP ports to a file
 
 ## Create empty current port files, necessary in the situation
 ## where no process/ports are found else we get diff failing and
 ## create empty logtcp/udp files for the same reason
+
 if [ -f $currtcp ]; then rm $currtcp; touch $currtcp;fi
 if [ -f $currudp ]; then rm $currudp; touch $currudp;fi
 if [ ! -f $logtcp ]; then touch $logtcp;fi
