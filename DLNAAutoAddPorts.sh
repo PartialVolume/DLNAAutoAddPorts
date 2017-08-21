@@ -39,7 +39,7 @@ allowed_UDP_ports_below_min_DLNA_port='1900 5353'
 ## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts V2.0.7"
+version="DLNAAutoAddPorts v2.0.7"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
