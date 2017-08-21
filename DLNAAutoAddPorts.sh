@@ -10,7 +10,9 @@
 ## except those explicitly stated by UFW or IPTABLES etc. It was mainly written with bubbleupnpserver
 ## and minidlnad in mind but should work for other DLNA software & devices. Any existing rules you
 ## have in your firewall are not affected.
-##
+
+## Check this script is running as root !
+if [ "$(id -u)" != "0" ]; then echo "Aborting, this script needs to be run as root!";exit 1;fi
 
 ## -----------------------------------
 ## User Configuration
@@ -32,7 +34,7 @@ allowed_UDP_ports_below_min_DLNA_port='1900 5353'
 ## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts v2.0.8"
+version="DLNAAutoAddPorts v2.0.9"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
@@ -232,6 +234,7 @@ else
         for tcpport in $tcpports
         do
                 echo $tcpport >> $logtcp
+                if [ $verbose -eq '1' ]; then echo "Writing $tcpport to $logtcp";fi
         done
 
 fi
@@ -282,5 +285,6 @@ else
         for udpport in $udpports
         do
                 echo $udpport >> $logudp
+                if [ $verbose -eq '1' ]; then echo "Writing $udpport to $logudp";fi
         done
 fi
