@@ -67,10 +67,10 @@ Minimum lower port for use by DLNA for random ports, I'm not sure what this shou
 All TCP ports below 'min_DLNA_port' will not be opened except for these exemptions
 
 **allowed_UDP_ports_below_min_DLNA_port='1900 5353'**
-## all UDP ports below 32000 will not be opened except for these exemptions
+All UDP ports below 32000 will not be opened except for these exemptions
 
 
-## Edit root Crontab to run script every 60 seconds
+## Edit root crontab to run script every 60 seconds
 As root, edit the root crontab ..
 
 `crontab -e`
