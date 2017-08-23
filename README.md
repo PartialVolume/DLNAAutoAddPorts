@@ -1,25 +1,20 @@
-## DNLAAutoAddPorts
+## Purpose
 
-This script will open and close TCP & UDP ports automatically for specified processes. It was designed to open TCP/UDP ports as randomly used by DLNA/UPNP servers that need to be accessable on the local area network, while having most ports closed to to your LAN except those explicitly stated by UFW or IPTABLES etc. It was mainly written with bubbleupnpserver
-and minidlnad in mind but should work for other DLNA software & devices. Any existing rules you have in your firewall are not affected.
+This script will automatically open and close TCP/UDP ports for user specified processes within 1 second of the process using a particular port.
 
-It was designed to operate with IPTABLES & UFW, although it doesn't interact with UFW, UFW should be used
-to enable the firewall, typically blocking incoming. DLNAAutoAddPorts.sh will then open the ports required
-by the DLNA devices thus allowing port control based on the application and therefore not requiring a range
-of ports to be opened manually (typically 32000-60000)or disabling the firewall to the LAN altogther. 
+## Scope
 
-This script avoids the user having to manually open a range of ports from 32000-65000 for chromecast transcoding
- to function or to see bubbleupnpservers proxy servers.
+Any Linux based server running BubbleUPnPServer/minidlna/rygel with IPTABLES and UFW firewall. May also be suitable for use with other DLNA/UPnP servers such as plex (untested). It requires iptables, netstat, cut which are installed as standard on ubuntu.
 
-Although the LAN is often considered 'trusted' this script is for those that like to have a
-firewall running on their server blocking all incoming traffic from the LAN unless certain
-ports are explicitly allowed. For instance if you are running UFW and have enabled it without adding any rules
-all incoming ports will be blocked, all outgoing ports are open. You can then allow SSH, SMB etc. DLNA
-appears to use random ports so you can't manually set an open incoming port. That's where DNLAAutoAddPorts.sh
-comes into play.
+## The Problem This Script Resolves
 
-So if you find that your DLNA/Chromecast devices don't work or can't be seen when your firewall is enabled
-but work fine with your firewall disabled, this script may be for you.
+Firstly, a lot of people like to run a firewall on their Linux server, with all incoming traffic denied. It then becomes a routine habit to expect to manually open a port for a particular service, ie 22 for SSH, 25 for SMTP etc.. so when they install their new DLNA/UPnP media server/transcoder, ie bubbleupnp they read the docs & search the internet for what ports they are supposed to open in their firewall. In the case of bubbleupnp that 1900/tcp and 58050 & 58051 (unless you have changed those later two ports in /etc/default/bubbleupnpserver). You will start streaming your content but then find that the transcoding that the server is supposed to do ..doesn't, maybe some files won't play on your TV (the transcoder should automatically take care of that ... and so after much searching you realise that it all works properly if you disable your firewall. Or maybe even opened up 20000 ports from 30000-50000. Of course anybody that a bit particular about which ports are opened looks upon opening up that many ports just so their DLNA will work properly with horror ! If you're lucky you may have come across a snippet of information that explains the random nature of port usage that DLNA/UPnP untilizes.. and that's the problem. Each time bubbleupnpserver starts it will use a random port somewhere between ~30000-60000. Reluctantly you realise you need to open a range of ports for it to work. Maybe you've looked at UFW/Iptable or Redhats firewall but couldn't find a means by which they would open a random port for a process.. what you need is a process specific firewall that's able to open a port for bubbleupnpserver, unfortunately none seem to do exactly what you want... At least that's what I've found, correct me if you know another way !
+
+So after a couple of years, I'd had enough, I wanted my incoming ports closed except for those services (SSH) that I wanted open and it was OK if bubbleupnpserver opened random ports but I wanted control over it and would only open the specific port it required not a whole range of ports.
+
+So I wrote this script that monitors what ports bubbleupnpserver, minidlna, rygel (& other DLNA servers) use in real time and open and close those ports only for those particular processes. So now I've got control of my firewall while having a fully functional bubbleupnpserver with transcoding that works and proxy servers that I can make use of as required.
+ 
+So if you find that your DLNA/Chromecast devices don't work or can't be seen when your firewall is enabled, proxy servers that don't appear in your library and all this works fine with your firewall disabled, this script may well be for you.
 
 ## Installation:
 Move DLNAAutoAddPorts.sh into a directory, in this example /home/linuxtv/bin/
