@@ -28,7 +28,8 @@ Give it root ownership and read+execute permissions for root ONLY ..
 
 Open DLNAAutoAddPorts.sh, search for a user configuration section which includes the following lines that can be edited as required.
 
-```processnames='minidlnad BubbleUPnPServer rygel'
+```
+processnames='minidlnad BubbleUPnPServer rygel'
 min_DLNA_port='32000'
 allowed_TCP_ports_below_min_DLNA_port='8200'
 allowed_UDP_ports_below_min_DLNA_port='1900 5353'
