@@ -19,7 +19,7 @@ if [ "$(id -u)" != "0" ]; then echo "Aborting, this script needs to be run as ro
 ## Edit these based on which DLNA servers you are running, multiple DLNA servers are ok. Separate each server name by a space
 ## Note case is important, process names must match exactly what you see if you run ps -ef | grep -i bubbleupnpserver or
 ## ps -ef | grep -i minidlnad or ps -ef | grep -i rygel
-processnames='minidlnad BubbleUPnPServer rygel'
+processnames='minidlnad java:BubbleUPnPServer java:ums.jar rygel'
 
 ## Minimum lower port for use by DLNA for random ports, I'm not sure what this should be, but seems to be about 32000
 min_DLNA_port='32000' 
@@ -34,7 +34,7 @@ allowed_UDP_ports_below_min_DLNA_port='1900 5353'
 ## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts v2.0.9"
+version="DLNAAutoAddPorts v2.0.10"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
@@ -64,29 +64,46 @@ if [ $verbose -eq '1' ]; then echo $version;fi
 if [ $verbose -eq '1' ]; then echo "Ports are being checked/opened/closed for the following processes:";fi
 for i in $processnames
 do
-    if [ $verbose -eq '1' ]; then echo $i;fi
-    if [ $i = 'BubbleUPnPServer' ] #netstat calls any java program java so we have to dig deeper to find out if its BubbleUPnPServer, which is done by 'ps' a few lines down
+    ## check for a prefix and if present split the prefix & processname
+    prefix=""
+    process=""
+    if [[ $i == *":"* ]]
     then
-            i='java'
+            prefix=$(echo $i | cut -d ':' -f 1)
+            process=$(echo $i | cut -d ':' -f 2)
+            netstatprocess=$prefix
+    else
+            netstatprocess=$i
     fi
+    
+    if [ $verbose -eq '1' ]; then echo "10 i=$i, netstatprocess=$netstatprocess, process=$process, prefix=$prefix";fi
 
-    tcpports_tmp=$(/bin/netstat -anp | grep $i | grep tcp | grep LISTEN | cut -d ':' -f 2 | cut -d ' ' -f 1)" "
-    udpports_tmp=$(/bin/netstat -anp | grep $i | grep udp | grep 0.0.0.0 | grep -v ESTABLISHED | cut -d ':' -f 2 | cut -d ' ' -f 1)" "
-
-    if [ $i = 'BubbleUPnPServer' ]
+    tcpports_tmp=$(/bin/netstat -anp | grep $netstatprocess | grep tcp | grep LISTEN | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
+    udpports_tmp=$(/bin/netstat -anp | grep $netstatprocess | grep udp | grep 0.0.0.0 | grep -v ESTABLISHED | cut -d ':' -f 2 | cut -d ' ' -f 1)" "
+    
+    if [ -n "$prefix" ]
     then
-            for port in tcpports_tmp
-	    do
-                ## The command below will validate a PID as a java process that has BubbleUPnPServer in the command line
-	        ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$port" |  awk '{ print substr($0, index($0,$7)) }' | grep "^java" | grep "BubbleUPnPServer"
-	        if [ $? eq '0' ];then tcpports=$tcpports$port;fi
-	    done
-
-            for port in udpports_tmp
+            if [ $verbose -eq '1' ]; then echo "20 prefix=$prefix";fi
+            for port in $tcpports_tmp
             do
-                ## The command below will validate a PID as a java process that has BubbleUPnPServer in the command line
-                ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$port" |  awk '{ print substr($0, index($0,$7)) }' | grep "^java" | grep "BubbleUPnPServer" 
-                if [ $? eq '0' ];then udpports=$udpports$port;fi
+                ## For each port in the list use netstat to return a PID, this PID will then be used in a search using ps below
+                pid=$(/bin/netstat -anp | grep "^tcp" | awk '{ print substr($0, index($0,$6)) }' | grep "^LISTEN" | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
+                if [ $verbose -eq '1' ]; then echo "30 tcp pid=$pid";fi
+                
+                ## TCP, Using the PID search for the process name using ps
+                ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "^$prefix")
+                if [ $? -eq '0' ];then tcpports="$tcpports$port ";fi
+            done
+
+            for port in $udpports_tmp
+            do
+                ## For each port in the list use netstat to return a PID, this PID will then be used in a search using ps below
+                pid=$(/bin/netstat -anp | grep "^udp" | awk '{ print substr($0, index($0,$6)) }' | grep -v "^ESTABLISHED" | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
+                if [ $verbose -eq '1' ]; then echo "40 udp pid=$pid";fi
+                
+                ## UDP, Using the PID search for the process name using ps
+                ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "^$prefix")
+                if [ $? -eq '0' ];then udpports="$udpports$port ";fi
             done
     else
             tcpports=$tcpports$tcpports_tmp
@@ -98,6 +115,9 @@ done
 ## Sort ports removing duplicates and clean up
 tcpports=$(echo $tcpports | xargs -n1 | sort -u | xargs)
 udpports=$(echo $udpports | xargs -n1 | sort -u | xargs)
+
+if [ $verbose -eq '1' ]; then echo "119 tcpports=$tcpports";fi
+if [ $verbose -eq '1' ]; then echo "120 udpports=$udpports";fi
 
 
 ## Process the list of found ports removing those below min_DLNA_port unless 
@@ -155,13 +175,13 @@ udpports=$udpports_tmp
 if [ $verbose -eq '1' ]; then echo "Ports identified as being used by the above processes..";fi
 if [ ! -z "$tcpports" ] || [ "$tcpports" = ' ' ]
 then
-        if [ $verbose -eq '1' ]; then echo "TCP/"$tcpports;fi
+        if [ $verbose -eq '1' ]; then echo "60 TCP/"$tcpports;fi
 else
         if [ $verbose -eq '1' ]; then echo "No process & associated TCP ports found";fi
 fi
 if [ ! -z "$udpports" ] || [ "$udpports" = ' ' ]
 then
-        if [ $verbose -eq '1' ]; then echo "UDP/"$udpports;fi
+        if [ $verbose -eq '1' ]; then echo "70 UDP/"$udpports;fi
 else
         if [ $verbose -eq '1' ]; then echo "No process & associated UDP ports found";fi
 fi
