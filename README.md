@@ -34,7 +34,7 @@ min_DLNA_port='32000'
 allowed_TCP_ports_below_min_DLNA_port='8200'
 allowed_UDP_ports_below_min_DLNA_port='1900 5353'
 ```
-**processnames='minidlnad BubbleUPnPServer rygel'**
+**processnames='minidlnad java:BubbleUPnPServer java:ums.jar rygel'**
 Remove or add process names as required, the default entries are minidlna, BubbleUPnPServer and rygel, if your
 not running any of these servers feel free to remove them. Case is important ! If your not sure what process name
 to enter or whether it's upper or lower case, makesure the process is running and use sudo netstat -anp to list
