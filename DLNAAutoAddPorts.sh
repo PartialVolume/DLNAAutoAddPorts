@@ -19,13 +19,14 @@ if [ "$(id -u)" != "0" ]; then echo "Aborting, this script needs to be run as ro
 ## Edit these based on which DLNA servers you are running, multiple DLNA servers are ok. Separate each server name by a space
 ## Note case is important, process names must match exactly what you see if you run ps -ef | grep -i bubbleupnpserver or
 ## ps -ef | grep -i minidlnad or ps -ef | grep -i rygel
-processnames='minidlnad java:BubbleUPnPServer java:ums.jar rygel'
+processnames='minidlnad java:BubbleUPnPServer java:ums.jar rygel rhythmbox dleyna-server'
 
 ## Minimum lower port for use by DLNA for random ports, I'm not sure what this should be, but seems to be about 32000
 min_DLNA_port='32000' 
 
-## all TCP ports below 'min_DLNA_port' will not be opened except for these exemptions 
-allowed_TCP_ports_below_min_DLNA_port='8200'
+## all TCP ports below 'min_DLNA_port' will not be opened except for these exemptions
+## 3689 used by rhythmbox
+allowed_TCP_ports_below_min_DLNA_port='3689 8200'
 
 ## all UDP ports below 32000 will not be opened except for these exemptions
 allowed_UDP_ports_below_min_DLNA_port='1900 5353'
@@ -34,7 +35,7 @@ allowed_UDP_ports_below_min_DLNA_port='1900 5353'
 ## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts v2.0.10"
+version="DLNAAutoAddPorts v2.0.11"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
