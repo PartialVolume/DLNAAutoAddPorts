@@ -19,14 +19,16 @@ if [ "$(id -u)" != "0" ]; then echo "Aborting, this script needs to be run as ro
 ## Edit these based on which DLNA servers you are running, multiple DLNA servers are ok. Separate each server name by a space
 ## Note case is important, process names must match exactly what you see if you run ps -ef | grep -i bubbleupnpserver or
 ## ps -ef | grep -i minidlnad or ps -ef | grep -i rygel
-processnames='minidlnad java:BubbleUPnPServer java:ums.jar rygel rhythmbox dleyna-server'
+## Note rhythmbox dleyna-server is not currently supported as dleyna opens & closes ports too quickly for this script to keep up
+## an alternative c coded script is in the works which will require less CPU and will capable of running more frequently.
+processnames='minidlnad java:BubbleUPnPServer java:ums.jar rygel'
 
 ## Minimum lower port for use by DLNA for random ports, I'm not sure what this should be, but seems to be about 32000
 min_DLNA_port='32000' 
 
 ## all TCP ports below 'min_DLNA_port' will not be opened except for these exemptions
-## 3689 used by rhythmbox
-allowed_TCP_ports_below_min_DLNA_port='3689 8200'
+## 3689 used by rhythmbox, 5001=ums
+allowed_TCP_ports_below_min_DLNA_port='3689 8200 5001'
 
 ## all UDP ports below 32000 will not be opened except for these exemptions
 allowed_UDP_ports_below_min_DLNA_port='1900 5353'
@@ -35,7 +37,7 @@ allowed_UDP_ports_below_min_DLNA_port='1900 5353'
 ## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts v2.0.11"
+version="DLNAAutoAddPorts v2.0.12"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
@@ -79,8 +81,9 @@ do
     
     if [ $verbose -eq '1' ]; then echo "10 i=$i, netstatprocess=$netstatprocess, process=$process, prefix=$prefix";fi
 
-    tcpports_tmp=$(/bin/netstat -anp | grep $netstatprocess | grep tcp | grep LISTEN | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
-    udpports_tmp=$(/bin/netstat -anp | grep $netstatprocess | grep udp | grep 0.0.0.0 | grep -v ESTABLISHED | cut -d ':' -f 2 | cut -d ' ' -f 1)" "
+    tcpports_tmp=$(/bin/netstat -anp | grep ^tcp | grep $netstatprocess | grep 'LISTEN\|ESTABLISHED\|SYNC\|CLOSE\|FIN\|LAST' | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
+#    tcpports_tmp=$(/bin/netstat -anp | grep $netstatprocess | grep tcp | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
+    udpports_tmp=$(/bin/netstat -anp | grep '^udp' | grep $netstatprocess | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
     
     if [ -n "$prefix" ]
     then
@@ -88,8 +91,8 @@ do
             for port in $tcpports_tmp
             do
                 ## For each port in the list use netstat to return a PID, this PID will then be used in a search using ps below
-                pid=$(/bin/netstat -anp | grep "^tcp" | awk '{ print substr($0, index($0,$6)) }' | grep "^LISTEN" | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
-                if [ $verbose -eq '1' ]; then echo "30 tcp pid=$pid";fi
+                #pid=$(/bin/netstat -anp | grep "^tcp" | awk '{ print substr($0, index($0,$6)) }' | grep "^LISTEN" | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
+                pid=$(/bin/netstat -anp | grep "^tcp" | awk '{ print substr($0, index($0,$6)) }' | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | sort -u)
                 
                 ## TCP, Using the PID search for the process name using ps
                 ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "^$prefix")
