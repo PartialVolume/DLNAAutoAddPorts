@@ -21,23 +21,23 @@ if [ "$(id -u)" != "0" ]; then echo "Aborting, this script needs to be run as ro
 ## ps -ef | grep -i minidlnad or ps -ef | grep -i rygel
 ## Note rhythmbox dleyna-server is not currently supported as dleyna opens & closes ports too quickly for this script to keep up
 ## an alternative c coded script is in the works which will require less CPU and will capable of running more frequently.
-processnames='minidlnad java:BubbleUPnPServer java:ums.jar rygel'
+processnames="minidlnad java:BubbleUPnPServer java:ums.jar rygel rhythmbox dleyna-server"
 
 ## Minimum lower port for use by DLNA for random ports, I'm not sure what this should be, but seems to be about 32000
-min_DLNA_port='32000' 
+min_DLNA_port="30000" 
 
 ## all TCP ports below 'min_DLNA_port' will not be opened except for these exemptions
 ## 3689 used by rhythmbox, 5001=ums
-allowed_TCP_ports_below_min_DLNA_port='3689 8200 5001'
+allowed_TCP_ports_below_min_DLNA_port="3689 8200 5001"
 
 ## all UDP ports below 32000 will not be opened except for these exemptions
-allowed_UDP_ports_below_min_DLNA_port='1900 5353'
+allowed_UDP_ports_below_min_DLNA_port="1900 5353"
 
 ## End of User Configuration
 ## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts v2.0.12"
+version="DLNAAutoAddPorts v2.0.14"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
@@ -47,24 +47,25 @@ currudp="/tmp/curr.udp"
 ## for test purposes it may intermittently update the ports.tcp & ports.udp files unnecessarily. So here we check no other instance
 ## is running. If another instance is running we pause for 3 seconds and then delete the PID anyway. Normally this script will run
 ## in under 150ms and via cron runs every 60 seconds, so if the PID file still exists after 3 seconds then it's a orphan PID file.
-DNLAAutoAddPortsPID='/var/run/DNLAAutoAddPorts.sh.pid'
-if [ -f $DNLAAutoAddPortsPID ]
+DNLAAutoAddPortsPID="/var/run/DNLAAutoAddPorts.sh.pid"
+if [ -f "$DNLAAutoAddPortsPID" ]
 then
-	sleep 3 #if PID file exists wait 3 seconds and test again, if it still exists delete it and carry on
-        rm -f -- $DNLAAutoAddPortsPID
+        sleep 3 #if PID file exists wait 3 seconds and test again, if it still exists delete it and carry on
+        echo "There appears to be another DLNAAutoAddPorts running, waiting for 3 seconds ..."
+        rm -f -- "$DNLAAutoAddPortsPID"
 fi		
 trap "rm -f -- $DNLAAutoAddPortsPID" EXIT
-echo $$ > $DNLAAutoAddPortsPID
+echo $$ > "$DNLAAutoAddPortsPID"
 
 
 ## Check for arguments
-if [ "$1" = -v ]; then verbose=1; else verbose=0;fi
+if [ "$1" = -v ]; then verbose="1"; else verbose="0";fi
 
 ## Get listening ports, multiple ports may be returned by each netstat command determined by process name, the results are sorted and duplicates deleted.
 tcpports=""
 udpports=""
-if [ $verbose -eq '1' ]; then echo $version;fi
-if [ $verbose -eq '1' ]; then echo "Ports are being checked/opened/closed for the following processes:";fi
+if [ $verbose -eq "1" ]; then echo $version;fi
+if [ $verbose -eq "1" ]; then echo "Ports are being checked/opened/closed for the following processes:";fi
 for i in $processnames
 do
     ## check for a prefix and if present split the prefix & processname
@@ -88,21 +89,22 @@ do
     if [ -n "$prefix" ]
     then
             if [ $verbose -eq '1' ]; then echo "20 prefix=$prefix";fi
-            for port in $tcpports_tmp
+            for port in "$tcpports_tmp"
             do
                 ## For each port in the list use netstat to return a PID, this PID will then be used in a search using ps below
                 #pid=$(/bin/netstat -anp | grep "^tcp" | awk '{ print substr($0, index($0,$6)) }' | grep "^LISTEN" | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
-                pid=$(/bin/netstat -anp | grep "^tcp" | awk '{ print substr($0, index($0,$6)) }' | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | sort -u)
+                pid=$(/bin/netstat -anp | grep '^tcp' | awk '{ print substr($0, index($0,$6)) }' | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | sort -u)
+                if [ $verbose -eq '1' ]; then echo "38 tcp pid=$pid";fi
                 
                 ## TCP, Using the PID search for the process name using ps
                 ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "^$prefix")
                 if [ $? -eq '0' ];then tcpports="$tcpports$port ";fi
             done
 
-            for port in $udpports_tmp
+            for port in "$udpports_tmp"
             do
                 ## For each port in the list use netstat to return a PID, this PID will then be used in a search using ps below
-                pid=$(/bin/netstat -anp | grep "^udp" | awk '{ print substr($0, index($0,$6)) }' | grep -v "^ESTABLISHED" | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
+                pid=$(/bin/netstat -anp | grep '^udp' | awk '{ print substr($0, index($0,$6)) }' | grep -v '^ESTABLISHED' | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
                 if [ $verbose -eq '1' ]; then echo "40 udp pid=$pid";fi
                 
                 ## UDP, Using the PID search for the process name using ps
@@ -214,7 +216,7 @@ do
 done
 
 ## TCP
-if [ $verbose -eq '1' ]; then echo "diff output of previous and current port logs follows..";fi
+if [ $verbose -eq '1' ]; then echo "diff output of previous and current TCP port logs follows..";fi
 if [ $verbose -eq '1' ]; then diff $currtcp $logtcp;status=$?;else diff $currtcp $logtcp > /dev/null 2>&1;status=$?;fi
 if [ $status = '0' ]
 then
@@ -264,7 +266,7 @@ else
 fi
 
 # UDP
-if [ $verbose -eq '1' ]; then echo "diff output of previous and current port logs follows..";fi
+if [ $verbose -eq '1' ]; then echo "diff output of previous and current UDP port logs follows..";fi
 if [ $verbose -eq '1' ]; then diff $currudp $logudp;status=$?;else diff $currudp $logudp > /dev/null 2>&1;status=$?;fi
 if [ $status = '0' ]
 then
