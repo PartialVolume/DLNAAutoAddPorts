@@ -23,6 +23,7 @@ if [ "$(id -u)" != "0" ]; then echo "Aborting, this script needs to be run as ro
 ## an alternative c coded script is in the works which will require less CPU and will capable of running more frequently.
 processnames="minidlnad java:BubbleUPnPServer java:ums.jar rygel rhythmbox dleyna-server"
 
+
 ## Minimum lower port for use by DLNA for random ports, I'm not sure what this should be, but seems to be about 32000
 min_DLNA_port="30000" 
 
@@ -37,7 +38,7 @@ allowed_UDP_ports_below_min_DLNA_port="1900 5353"
 ## -----------------------------------
 
 # Set logfiles
-version="DLNAAutoAddPorts v2.0.14"
+version="DLNAAutoAddPorts v2.0.15"
 logtcp="/tmp/ports.tcp"
 logudp="/tmp/ports.udp"
 currtcp="/tmp/curr.tcp"
@@ -82,8 +83,7 @@ do
     
     if [ $verbose -eq '1' ]; then echo "10 i=$i, netstatprocess=$netstatprocess, process=$process, prefix=$prefix";fi
 
-    tcpports_tmp=$(/bin/netstat -anp | grep ^tcp | grep $netstatprocess | grep 'LISTEN\|ESTABLISHED\|SYNC\|CLOSE\|FIN\|LAST' | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
-#    tcpports_tmp=$(/bin/netstat -anp | grep $netstatprocess | grep tcp | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
+    tcpports_tmp="$(/bin/netstat -anpt | grep $netstatprocess | grep 'LISTEN\|ESTABLISHED\|SYNC\|CLOSE\|FIN\|LAST' | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)"" "
     udpports_tmp=$(/bin/netstat -anp | grep '^udp' | grep $netstatprocess | cut -d ':' -f 2 | cut -d ' ' -f 1 | xargs -n1 | sort -u)" "
     
     if [ -n "$prefix" ]
@@ -93,22 +93,22 @@ do
             do
                 ## For each port in the list use netstat to return a PID, this PID will then be used in a search using ps below
                 #pid=$(/bin/netstat -anp | grep "^tcp" | awk '{ print substr($0, index($0,$6)) }' | grep "^LISTEN" | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
-                pid=$(/bin/netstat -anp | grep '^tcp' | awk '{ print substr($0, index($0,$6)) }' | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | sort -u)
+                pid="$(/bin/netstat -anpt | awk '{ print substr($0, index($0,$6)) }' | awk '{ print substr($0, index($0,$2)) }' | grep $netstatprocess | cut -d '/' -f 1 | sort -u)"
                 if [ $verbose -eq '1' ]; then echo "38 tcp pid=$pid";fi
                 
                 ## TCP, Using the PID search for the process name using ps
-                ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "^$prefix")
+                ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "$process")
                 if [ $? -eq '0' ];then tcpports="$tcpports$port ";fi
             done
 
             for port in "$udpports_tmp"
             do
                 ## For each port in the list use netstat to return a PID, this PID will then be used in a search using ps below
-                pid=$(/bin/netstat -anp | grep '^udp' | awk '{ print substr($0, index($0,$6)) }' | grep -v '^ESTABLISHED' | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)
+                pid="$(/bin/netstat -anpu | awk '{ print substr($0, index($0,$6)) }' | grep -v '^ESTABLISHED' | awk '{ print substr($0, index($0,$2)) }' | grep "$netstatprocess" | cut -d '/' -f 1 | xargs -n1 | sort -u)"
                 if [ $verbose -eq '1' ]; then echo "40 udp pid=$pid";fi
                 
                 ## UDP, Using the PID search for the process name using ps
-                ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "^$prefix")
+                ps_process=$(ps -ef | awk '{ print substr($0, index($0,$2)) }' | grep "^$pid" |  awk '{ print substr($0, index($0,$7)) }' | grep "$process")
                 if [ $? -eq '0' ];then udpports="$udpports$port ";fi
             done
     else
@@ -217,7 +217,7 @@ done
 
 ## TCP
 if [ $verbose -eq '1' ]; then echo "diff output of previous and current TCP port logs follows..";fi
-if [ $verbose -eq '1' ]; then diff $currtcp $logtcp;status=$?;else diff $currtcp $logtcp > /dev/null 2>&1;status=$?;fi
+if [ $verbose -eq '1' ]; then diffcurrtcp="$(diff $currtcp $logtcp)";status="$?";echo "$diffcurrtcp";else diffcurrtcp="$(diff $currtcp $logtcp)";status="$?";fi
 if [ $status = '0' ]
 then
         if [ $verbose -eq '1' ]; then echo "No change in TCP ports";fi
@@ -267,7 +267,7 @@ fi
 
 # UDP
 if [ $verbose -eq '1' ]; then echo "diff output of previous and current UDP port logs follows..";fi
-if [ $verbose -eq '1' ]; then diff $currudp $logudp;status=$?;else diff $currudp $logudp > /dev/null 2>&1;status=$?;fi
+if [ $verbose -eq '1' ]; then diffcurrudp="$(diff $currudp $logudp)";status=$?;echo "$diffcurrudp";else diffcurrudp="$(diff $currudp $logudp)";status=$?;fi
 if [ $status = '0' ]
 then
         if [ $verbose -eq '1' ]; then echo "No change in UDP ports";fi
